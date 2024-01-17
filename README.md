@@ -1,6 +1,6 @@
 # sample-lex-bot-using-aws-cpp-sdk
 
-This is a sample Lex program that uses the aws-cpp-sdk to connect to a Lex bot (preferably, the standard Hotel Bot) and streams audio of a caller saying, "I would like to book a flight".  The audio is contained in the file named I-would-like-to-book-a-flight.r8.  It is linear 16-bit PCM audio with 8khz sample rate.
+This is a sample Lex program that uses the aws-cpp-sdk to connect to a Lex bot (preferably, the standard Hotel Bot) and streams audio of a caller saying, "I would like to book a flight".  The audio is contained in the file named I-would-like-to-book-a-flight.r8.  It is linear 16-bit PCM audio with 8khz sample rate.  The audio is streamed to aws lex as it would be on a VoIP telephony system with 8khz audio and 20 millisecond packetization.
 
 As transcripts and intents are received from AWS lex they are logged to the console.  The goal is to illustrate and troubleshoot the difference in response time/latency when using the AWS SDK on Debian 12 vs Debian 11. Those issues were reported [here](https://github.com/aws/aws-sdk-cpp/issues/2779).
 
