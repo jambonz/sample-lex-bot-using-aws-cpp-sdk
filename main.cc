@@ -84,11 +84,10 @@ int main() {
 
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuid_str = boost::uuids::to_string(uuid);
-  // read caller.r8 file
-  std::ifstream file("caller.r8", std::ios::binary | std::ios::ate);
+  std::ifstream file("I-would-like-to-book-a-flight.r8", std::ios::binary | std::ios::ate);
 
   if (!file.is_open()) {
-      std::cerr << "Failed to open caller.r8 file" << std::endl;
+      std::cerr << "Failed to open I-would-like-to-book-a-flight.r8 file" << std::endl;
       return 1;
   }
 
@@ -97,7 +96,7 @@ int main() {
 
   std::vector<char> buffer(size);
   if (!file.read(buffer.data(), size)) {
-      std::cerr << "Failed to read caller.r8 file"<< std::endl;
+      std::cerr << "Failed to read I-would-like-to-book-a-flight.r8 file"<< std::endl;
       return 1;
   }
 
