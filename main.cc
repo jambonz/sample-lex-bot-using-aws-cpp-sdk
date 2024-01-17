@@ -69,7 +69,7 @@ cJSON* lex2Json(const TextResponseEvent& ev) {
   }
   return json;
 }
-int main() {
+int main(int argc, char *argv[]) {
   // check env variables
   const char* botID = std::getenv("BOT_ID");
   const char* botAliasID = std::getenv("BOT_ALIAS_ID");
@@ -79,12 +79,23 @@ int main() {
     std::cout << "BOT_ID or BOT_ALIAS_ID or AWS_ACCESS_KEY or AWS_SECRET_ACCESS_KEY is missing, exit" << std::endl;
     return 1;
   }
-  // Global vairabl
-  StartConversationRequestEventStream* m_pStream;
 
+  if (argc != 2) {
+      std::cerr << "Usage: " << argv[0] << " <audio_file_path>" << std::endl;
+      return 1;
+  }
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  StartConversationRequestEventStream* m_pStream;
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
   std::string uuid_str = boost::uuids::to_string(uuid);
-  std::ifstream file("I-would-like-to-book-a-flight.r8", std::ios::binary | std::ios::ate);
+  const std::string audioFilePath = argv[1];
+
+  std::ifstream file(audioFilePath, std::ios::binary | std::ios::ate);
+  if (!file.is_open()) {
+      std::cerr << "Failed to open " << audioFilePath << std::endl;
+      return 1;
+  }
 
   if (!file.is_open()) {
       std::cerr << "Failed to open I-would-like-to-book-a-flight.r8 file" << std::endl;
@@ -99,6 +110,7 @@ int main() {
       std::cerr << "Failed to read I-would-like-to-book-a-flight.r8 file"<< std::endl;
       return 1;
   }
+  std::cout << "Read " << size << " bytes from I-would-like-to-book-a-flight.r8 file" << std::endl;
 
   // Init Lex client
   Aws::SDKOptions options;
@@ -117,33 +129,41 @@ int main() {
   size_t idx = 0;
 
   // configure handler
-  m_handler.SetHeartbeatEventCallback([](const HeartbeatEvent&)
+  m_handler.SetHeartbeatEventCallback([&](const HeartbeatEvent&)
   {
-    std::cout << "Received Lex Heartbeat" << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+    std::cout << "Received Lex Heartbeat after " <<  duration.count() << " ms" << std::endl;
   });
 
-  m_handler.SetPlaybackInterruptionEventCallback([](const PlaybackInterruptionEvent& ev){
+  m_handler.SetPlaybackInterruptionEventCallback([&](const PlaybackInterruptionEvent& ev){
     cJSON* json = lex2Json(ev);
     char* data = cJSON_AS4CPP_PrintUnformatted(json);
-    std::cout << "Received Lex SetPlaybackInterruptionEventCallback: " << data << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+    std::cout << "Received Lex SetPlaybackInterruptionEventCallback after " <<  duration.count() << " ms" << std::endl;
   });
 
-  m_handler.SetTranscriptEventCallback([](const TranscriptEvent& ev)
+  m_handler.SetTranscriptEventCallback([&](const TranscriptEvent& ev)
   {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
     cJSON* json = lex2Json(ev);
     char* data = cJSON_AS4CPP_PrintUnformatted(json);
-    std::cout << "Received Lex SetTranscriptEventCallback: " << data << std::endl;
+    std::cout << "Received Lex Transcript: [" << data << "] after " <<  duration.count() << " ms" << std::endl;
   });
 
-  m_handler.SetTextResponseEventCallback([&idx](const TextResponseEvent& ev){
+  m_handler.SetTextResponseEventCallback([&](const TextResponseEvent& ev){
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
 		cJSON* json = lex2Json(ev);
     char* data = cJSON_AS4CPP_PrintUnformatted(json);
-    std::cout << idx * 20 << "ms, Received Lex SetTranscriptEventCallback: " << data << std::endl;
-    });
+    std::cout << idx * 20 << "ms, Received Lex TextResponse: [" << data << "] after " <<  duration.count() << " ms" << std::endl;
+  });
 
-    m_handler.SetAudioResponseEventCallback([](const AudioResponseEvent& ev){
-      // std::cout << "Received Lex SetAudioResponseEventCallback:" << std::endl;
-    });
+  m_handler.SetAudioResponseEventCallback([&](const AudioResponseEvent& ev){
+    // std::cout << "Received Lex SetAudioResponseEventCallback:" << std::endl;
+  });
 
 
   // config request
@@ -172,25 +192,42 @@ int main() {
             const StartConversationOutcome& outcome,
             const std::shared_ptr<const Aws::Client::AsyncCallerContext>&)
     {
-      std::cout << "Received Lex StartConversationOutcome: " << outcome.GetError() << std::endl;
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+      std::cout << "Received Lex StartConversationOutcome: " << outcome.GetError() << " after " <<  duration.count() << " ms" << std::endl;
     }, nullptr/*context*/);
 
   int CHUNK_LENGTH = 320;
-    while (idx < size) {
-      std::vector<char> chunk(buffer.begin() + idx, buffer.begin() + std::min(idx + CHUNK_LENGTH, buffer.size()));
-      Aws::Utils::ByteBuffer audio((const unsigned char *) chunk.data(), chunk.size());
+  auto start = std::chrono::high_resolution_clock::now();
+  std::vector<char> chunk(CHUNK_LENGTH);
+
+  start_time = std::chrono::high_resolution_clock::now();
+  while (idx < size) {
+      size_t next_idx = std::min(idx + CHUNK_LENGTH, buffer.size());
+      std::copy(buffer.begin() + idx, buffer.begin() + next_idx, chunk.begin());
+      Aws::Utils::ByteBuffer audio((const unsigned char *)chunk.data(), next_idx - idx);
 
       AudioInputEvent audioInputEvent;
       audioInputEvent.SetAudioChunk(audio);
       audioInputEvent.SetContentType("audio/lpcm; sample-rate=8000; sample-size-bits=16; channel-count=1; is-big-endian=false");
-      m_pStream->WriteAudioInputEvent(audioInputEvent);
-      m_pStream->flush();
-      idx += CHUNK_LENGTH;
-      std::this_thread::sleep_for(std::chrono::milliseconds(20));
-      std::cout << logCurrentTime() << "Sending 320 bytes data to lex in posittion2" << std::endl;
-    }
 
-    std::cout << "Shut down" << std::endl;
+      if (!m_pStream->WriteAudioInputEvent(audioInputEvent) || !m_pStream->flush()) {
+          // Handle error
+      }
+
+      idx += CHUNK_LENGTH;
+      
+      auto end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double, std::milli> elapsed = end - start;
+      if (elapsed.count() < 20) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(20) - elapsed);
+      }
+      start = std::chrono::high_resolution_clock::now();
+  }
+
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+  std::cout << "Shut down after " <<  duration.count() << " ms" << std::endl;
 
   //shutdown lex
   Aws::ShutdownAPI(options);

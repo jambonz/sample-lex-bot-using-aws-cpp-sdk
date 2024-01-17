@@ -23,10 +23,15 @@ make  && sudo make install
 ```
 
 ### Build and run lex_app
-From project root
 ```sh
+cd /usr/local/src
+git clone https://github.com/jambonz/sample-lex-bot-using-aws-cpp-sdk
+cd sample-lex-bot-using-aws-cpp-sdk
 mkdir -p build && cd build
 cmake ..
 make 
-BOT_ID=<botID> BOT_ALIAS_ID=<bot-alias-id> AWS_ACCESS_KEY=<access key> AWS_SECRET_ACCESS_KEY=<secret key> ./lex_app
+export BOT_ID=<botID> 
+export BOT_ALIAS_ID=<bot-alias-id> 
+export AWS_ACCESS_KEY=<access key> 
+export AWS_SECRET_ACCESS_KEY=<secret key> ./lex_app
 ```
