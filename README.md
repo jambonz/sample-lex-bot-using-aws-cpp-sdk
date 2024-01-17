@@ -67,6 +67,4 @@ Received Lex Transcript: [{"transcript":"i would like to book a flight","eventId
 1907200ms, Received Lex TextResponse: [{"eventId":"RESPONSE-17","messages":[{"msg":"I see you have a frequent flyer account with us. Can you confirm your frequent flyer number?","type":"PlainText"}]}] after 130214 ms
 ```
 
-Extremely long delay.
-
-
+Here it takes over 2 minutes to retrieve a transcript.
