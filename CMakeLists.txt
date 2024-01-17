@@ -20,4 +20,4 @@ target_link_libraries(lex_app PRIVATE ${AWSSDK_LINK_LIBRARIES})
 target_link_libraries(lex_app PRIVATE Boost::system Boost::filesystem)
 
 # Copy caller.r8 to the build directory
-configure_file(caller.r8 caller.r8 COPYONLY)
+configure_file(I-would-like-to-book-a-flight.r8 I-would-like-to-book-a-flight.r8 COPYONLY)
