@@ -33,5 +33,40 @@ make
 export BOT_ID=<botID> 
 export BOT_ALIAS_ID=<bot-alias-id> 
 export AWS_ACCESS_KEY=<access key> 
-export AWS_SECRET_ACCESS_KEY=<secret key> ./lex_app
+export AWS_SECRET_ACCESS_KEY=<secret key> 
+./lex_app I-would-like-to-book-a-flight.r8
+``
+
+## Results
+
+### Debian 11
+
+```sh
+$ ./lex_app I-would-like-to-book-a-flight.r8
+Read 1948960 bytes from I-would-like-to-book-a-flight.r8 file
+Received Lex Heartbeat after 80 ms
+Received Lex Transcript: [{"transcript":"i would like to book a flight","eventId":"RESPONSE-3"}] after 6117 ms
+1945600ms, Received Lex TextResponse: [{"eventId":"RESPONSE-5","messages":[{"msg":"I see you have a frequent flyer account with us. Can you confirm your frequent flyer number?","type":"PlainText"}]}] after 6396 ms
 ```
+
+This is normal.  A transcript is returned after 6 seconds.
+
+### Debian 12
+
+```sh
+$ ./lex_app I-would-like-to-book-a-flight.r8
+Read 1948960 bytes from I-would-like-to-book-a-flight.r8 file
+Received Lex Heartbeat after 88 ms
+Received Lex Heartbeat after 20089 ms
+Received Lex Heartbeat after 40089 ms
+Received Lex Heartbeat after 60089 ms
+Received Lex Heartbeat after 80089 ms
+Received Lex Heartbeat after 100089 ms
+Received Lex Heartbeat after 120090 ms
+Received Lex Transcript: [{"transcript":"i would like to book a flight","eventId":"RESPONSE-15"}] after 129319 ms
+1907200ms, Received Lex TextResponse: [{"eventId":"RESPONSE-17","messages":[{"msg":"I see you have a frequent flyer account with us. Can you confirm your frequent flyer number?","type":"PlainText"}]}] after 130214 ms
+```
+
+Extremely long delay.
+
+
